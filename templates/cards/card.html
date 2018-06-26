@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+{% block content %}
+    <div class="section scrollspy">
+    <div class="container">
+    <div class="row">
+    <div class="col s12 m12 l8">
+      <div class="card">
+        <div class="card-image" id="cardimage">
+
+        </div>
+        <div class="card-content">
+            <h5 class="cardtitle" id="cardtitle"></h5>
+            <hr>
+            <div class="card-tabs" id="card-tabs">
+                <ul class="tabs tabs-fixed-width">
+                    <li class="tab"><a class="active" id="desc" href="#description">Description</a></li>
+                    <li class="tab"><a href="#content" id="cont">Content</a></li>
+                    <li class="tab" id="video-tab"><a href="#video">Video</a></li>
+                </ul>
+            </div>
+            <div class="card-content grey lighten-4 ">
+                <div id="description"></div>
+                <div id="content">
+                    <div id="contenta"></div>
+                    <div id="contentb">
+                        <br>
+                        <a class="waves-effect white btn" id="thumb_up"><i class="material-icons left-align" >thumb_up</i></a>
+                        <a class="waves-effect white btn" id="thumb_down"><i class="material-icons center" >thumb_down</i></a>
+                        <a class="waves-effect white btn" id="nextcard"><i class="material-icons right">send</i>Next Card</a>
+                        <a class="waves-effect white btn" id="sendquiz"><i class="material-icons right">send</i>Submit</a>
+                    </div>
+                </div>
+                <div id="video"></div>
+            </div>
+        </div>
+      </div>
+    </div>
+    </div>
+    </div>
+</div>
+{%  endblock %}
+{% block js %}
+<script type="application/javascript">
+$( document ).ready(function() {
+
+    var cards = {{ cards|safe }};
+    console.log(cards)
+    var sequence = {{ sequence|safe }};
+    M.AutoInit();
+
+    function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = jQuery.trim(cookies[i]);
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+    //CSRF token
+    function csrfSafeMethod(method) {
+            // these HTTP methods do not require CSRF protection
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+    //Ajax calls
+    function saveCardRating(card_id, seq_id, rating){
+        $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+            }
+        }
+        });
+        $.ajax({
+            type: 'POST',
+            url: '/save_rating/'+card_id+'/'+seq_id+'/'+rating
+        })
+        .done(function( data ) {
+                alert(data);
+                $('#thumb_up').hide();
+                $('#thumb_down').hide();
+                $('#nextcard').show();
+            });
+    }
+
+    function saveQuizResponse(question_id, choice_id){
+        $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+            }
+        }
+        });
+        $.ajax({
+            type: 'POST',
+            url: '/save_quiz/'+question_id+'/'+choice_id
+        })
+        .done(function( data ) {
+                alert(data);
+                nextCard();
+            });
+    }
+
+    function showContent() {
+        $('#card-tabs').show();
+        $('#sendquiz').hide();
+        $('#cardtitle').show();
+        $('#description').show();
+        $('#video').hide();
+        $('#video-tab').hide();
+        $('#nextcard').hide();
+        $('#cardtitle').fadeOut(200, function() {$(this).empty().text(cards[counter].title).show();});
+        $('#description').fadeOut(200, function() {$(this).empty().text(cards[counter].description).show();});
+        $('#contenta').fadeOut(200, function() {$(this).empty().append($.parseHTML(cards[counter].content)).show();});
+        $('#cardimage').fadeOut(200, function() {$(this).empty().append('<img id="img" src="/static/'+cards[counter].image+'">').show();});
+        $('#thumb_up').show();
+        $('#thumb_down').show();
+        if (cards[counter].video){$('#nextcard').show(); $('#video-tab').show(); };
+    }
+
+    function nextCard() {
+        alert(counter);
+        if (counter<cards.length && cards[counter].quizzes) { parseQuiz(cards[counter].quizzes); counter +=1;alert(counter);}
+
+        else if (counter<cards.length-1)
+        {
+            counter += 1;
+            showContent();
+        }
+        else if (counter==cards.length-1){
+            showContent();
+        }
+        else {
+            $('#sendquiz').hide();
+            $('#video').hide();
+            $('#video-tab').hide();
+            $('#nextcard').hide();
+            $('#card-tabs').hide();
+            $('#description').hide();
+            $('#cardimage').hide();
+            $('#cardtitle').empty();
+            $('#contenta').empty().append('<h5>You have finished all the cards for this topic. You can explore other topics <a href="/">here</a></h5>');
+
+        }
+
+    }
+
+    function parseQuiz(quizzes){
+        $.each(quizzes, function (index, value) {
+            $('#nextcard').hide();
+            $('#card-tabs').hide();
+            $('#cardtitle').empty().hide();
+            $('#description').empty().hide();
+            $('#cardimage').empty().hide();
+            $('#video').hide();
+            $('#video-tab').hide();
+            $('#contenta').empty().append('<h5>'+value.question[1]+'</h5><br>');
+            $.each(value.choices, function (cindex, cvalue) {
+                $('#contenta').append('<fieldset id="quizfield">' +
+                    '        <input type="radio" name="choice" data-quest="'+value.question[0]+'" id="'+cvalue[0]+'"' +
+                    '               value="'+cvalue[1]+'"/>' +
+                    '        <label for="'+cvalue[0]+'">'+cvalue[1]+'</label>' +
+                    '    </fieldset>');
+            });
+            $('#sendquiz').show();
+
+        })
+    }
+
+    $(function () {
+            counter = 0;
+            $('#sendquiz').hide();
+            $('#nextcard').hide();
+            $('#video').hide();
+            $('#video-tab').hide();
+            $('#cardtitle').text(cards[counter].title);
+            $('#description').text(cards[counter].description);
+            $('#contenta').append($.parseHTML(cards[counter].content));
+            $('#cardimage').append('<img id="img" src="/static/'+cards[counter].image+'">');
+            $('#thumb_up').click(function () { saveCardRating(cards[counter].id, sequence, '1') }).show();
+            $('#thumb_down').click(function () { saveCardRating(cards[counter].id, sequence, '0')}).show();
+            if (cards[counter].video){$('#nextcard').show(); $('#video-tab').show(); };
+
+    });
+
+    $('#nextcard').click(function () {
+            nextCard();
+        });
+
+    $("#sendquiz").click(function() {
+        var questionValue = $("input[name='choice']:checked").data("quest");
+        var choiceValue = $("input[name='choice']:checked").attr("id");
+        saveQuizResponse(questionValue, choiceValue);
+    });
+});
+</script>
+{% endblock %}
