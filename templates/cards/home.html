@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+{% load static %}
+{% block content %}
+
+<div class="container">
+    <h3 class="text-darken-4 teal-text">Welcome to Perls</h3>
+    <h5 class="text-accent-4">Please select a language to start exploring topics</h5>
+    <br>
+
+    <div class="col s12 m8 offset-m2 l6 offset-l3">
+        <div class="card-panel grey lighten-5 z-depth-1">
+          <div class="row valign-wrapper">
+            <div class="col s2">
+              <!--<img src="{% static 'uploads/chinese_flag.png' %}" alt="chinese" class="circle responsive-img">-->
+            </div>
+            <div class="col s10">
+              <span class="black-text">
+                <h5><a href="/lang/C">Chinese</a></h5>
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="card-panel grey lighten-5 z-depth-1">
+          <div class="row valign-wrapper">
+            <div class="col s2">
+              <!--<img src="{% static 'uploads/russian_flag.png' %}" alt="chinese" class="circle responsive-img">-->
+            </div>
+            <div class="col s10">
+              <span class="black-text">
+                <h5><a href="/lang/R">Russian</a></h5>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+</div>
+
+{% endblock %}

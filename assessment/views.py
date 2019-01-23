@@ -1,14 +1,31 @@
 from .models import *
-from django.shortcuts import render, get_list_or_404
-import random
+from cards.models import  CardSequence
 from django.http import HttpResponse
+from django.contrib.auth.decorators import login_required
 
-def save_quiz_response(request, question_id, choice_id):
+@login_required
+def save_quiz_response(request, choice_id, sequence_id):
     if request.is_ajax() and request.method=='POST':
-        question = Question.objects.get(pk=question_id)
-        choice = Choice.objects.get(pk=choice_id)
-        QuestionRating.objects.create(question=question, response=choice, user=request.user)
-        return HttpResponse('OK')
+        answer = Answer.objects.get(pk=choice_id)
+        response = QuestionRating.objects.create(answer=answer, user=request.user)
+        card_sequence = CardSequence.objects.get(pk=sequence_id)
+        card_sequence.quiz_responses.add(response)
+        card_sequence.save()
+        return HttpResponse(response.pk)
+
+@login_required
+def get_quizscore_sequence(request, sequence_id):
+    print(sequence_id)
+    seq = CardSequence.objects.get(pk=sequence_id)
+    score=0
+    if len(seq.quiz_responses.all())>0:
+        for correct in seq.quiz_responses.all():
+            score+= int(correct.answer.correct)
+        percent = score/len(seq.quiz_responses.all())
+        return HttpResponse(str(percent*100)+ ' % correct in your quizzes')
+    else:
+        return HttpResponse("Topic completed.")
+
 
 
 

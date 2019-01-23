@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+{% block content %}
+    <div class="section scrollspy">
+    <div class="container">
+    <div class="row">
+    <div class="col s12 m12 l8">
+      <div class="card">
+        <div class="card-image" id="cardimage">
+            {% if  card.image  %}<img src="{{ card.image }}">{% endif %}
+        </div>
+        <div class="card-content">
+            <h5 class="cardtitle" id="cardtitle"></h5>
+            <hr>
+            <div class="card-tabs" id="card-tabs">
+                <ul class="tabs tabs-fixed-width">
+                    <li class="tab"><a class="active" id="desc" href="#description">Description</a></li>
+                    <li class="tab"><a href="#content" id="cont">Content</a></li>
+                </ul>
+            </div>
+            <div class="card-content grey lighten-4 ">
+                <div id="description">{{ card.description }}</div>
+                <div id="content">
+                    <div id="contenta">{{ card.content|safe }}</div>
+                    <div id="contentb">
+                        <br>
+                    </div>
+                </div>
+            </div>
+            <button><a href="/history">Return to History</a> </button>
+        </div>
+      </div>
+    </div>
+    </div>
+    </div>
+</div>
+{%  endblock %}

@@ -18,14 +18,24 @@ from django.urls import path, include
 from cards.views import *
 from django.conf.urls.static import static
 from django.conf import settings
-from assessment.views import save_quiz_response
+from assessment.views import save_quiz_response, get_quizscore_sequence
+from django.views.generic import TemplateView
+from django.contrib.auth.decorators import login_required
+
 
 urlpatterns = [
+    path('', include(('social_django.urls', 'social_django'), namespace='social')),
+    path('', include(('django.contrib.auth.urls','django.contrib.auth'), namespace='auth')),
+
+    path('', login_required(TemplateView.as_view(template_name="cards/home.html")), name="home"),
     path('grappelli/', include('grappelli.urls')),
     path('admin/', admin.site.urls),
-    path('', TopicListView.as_view(), name='topics-list'),
-    path('cards/<int:topic_id>', get_cards_by_topic, name='cards'),
+    path('lang/<str:lang>/', TopicListView.as_view(), name='topics-list'),
+    path('cards/<int:topic_id>/<str:lang>/', get_cards_by_topic, name='cards'),
+    path('card/<int:card_id>/', show_card, name='card'),
+    path('history/', get_user_activity, name='history'),
     path('save_rating/<int:card_id>/<int:seq_id>/<int:rating>', save_card_rating, name='save_card_rating'),
     path('quiz/<int:quiz_id>', get_quiz, name='get_quiz'),
-    path('save_quiz/<int:question_id>/<int:choice_id>', save_quiz_response, name='save_quiz'),
-]+ static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    path('save_quiz/<int:choice_id>/<int:sequence_id>', save_quiz_response, name='save_quiz'),
+    path('quiz_score/<int:sequence_id>', get_quizscore_sequence, name='quiz_score'),
+]+ static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

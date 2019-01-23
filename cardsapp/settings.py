@@ -25,7 +25,7 @@ SECRET_KEY = '#l3=f=&4zb=@$nac%cwl5ds31#cxg6e0r!v2towx6!dhkfi+3%'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'lftic.lll.hawaii.edu']
 
 
 # Application definition
@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'social_django',
     'cards',
     'assessment'
 ]
@@ -54,6 +55,12 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'cardsapp.urls'
 
+AUTHENTICATION_BACKENDS = (
+    'social_core.backends.google.GoogleOAuth2',
+    'django.contrib.auth.backends.ModelBackend',
+)
+
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -63,6 +70,7 @@ TEMPLATES = [
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
+                'django.template.context_processors.media',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
@@ -84,7 +92,7 @@ DATABASES = {
     }
 }
 
-
+HOME_URL='/perls'
 # Password validation
 # https://docs.djangoproject.com/en/2.0/ref/settings/#auth-password-validators
 
@@ -122,14 +130,33 @@ GRAPPELLI_ADMIN_TITLE='Perls Admin Panel'
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 
+
 STATIC_URL = '/static/'
-MEDIA_ROOT= os.path.join(BASE_DIR, 'static')
+MEDIA_URL = '/media/'
+MEDIA_ROOT= os.path.join(BASE_DIR, 'media')
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, 'static'),
     MEDIA_ROOT
 )
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = 'kDi-MWWGqi41djoaz3iR2rIW'
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = '364457186109-8h2cj0n23o3lnefi9ba6psunl3ecbtpm.apps.googleusercontent.com'  # This is the Client ID (not a key)
+
+
+
+SOCIAL_AUTH_PIPELINE = (
+    'social.pipeline.social_auth.social_details',
+    'social.pipeline.social_auth.social_uid',
+    'cards.utils.soc_auth_allowed',
+    'social.pipeline.user.get_username',
+    'social.pipeline.social_auth.associate_user',
+    'social.pipeline.social_auth.load_extra_data',
+    'social.pipeline.user.user_details',
+)
+
+LOGIN_URL = '/login/google-oauth2/'
+LOGIN_REDIRECT_URL = '/'
 
 
 

@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load static from staticfiles %}
+{% load static  %}
 {% block content %}
     <div class="section scrollspy">
     <div class="container">
@@ -9,12 +11,23 @@
             {% for obj in object_list %}
             <div class="col s12 m6 l4">
                 <div class="card">
+
                     <div class="card-image waves-effect waves-block waves-light">
-                        <img class="activator" src="/static/{{ obj.image }}">
+                        {% if  '/C/' in request.path   %}
+                        <img class="activator" src="{% get_media_prefix %}{{ obj.image_chinese }} ">
+                            {{  request.lang }}
+                        {% elif '/R/' in request.path%}
+                        <img class="activator" src="{% get_media_prefix %}{{ obj.image_russian }}">
+                        {% endif %}
                     </div>
+
                     <div class="card-content">
                         <span class="card-title activator grey-text text-darken-4">{{ obj.name }} <i class="mdi-navigation-more-vert right"></i></span>
-                        <p><a href="/cards/{{ obj.pk }}">Explore cards related to this topic</a></p>
+                        {% if  '/C/' in request.path   %}
+                        <p><a href="{{SITE_ROOT}}/cards/{{ obj.pk }}/C/">Explore cards related to this topic</a></p>
+                        {% elif '/R/' in request.path%}
+                        <p><a href="{{SITE_ROOT}}/cards/{{ obj.pk }}/R/">Explore cards related to this topic</a></p>
+                        {% endif %}
                     </div>
                     <div class="card-reveal">
                         <span class="card-title grey-text text-darken-4">{{ obj.name }} <i class="mdi-navigation-close right"></i></span>

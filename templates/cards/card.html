@@ -45,8 +45,8 @@
 $( document ).ready(function() {
 
     var cards = {{ cards|safe }};
-    console.log(cards)
     var sequence = {{ sequence|safe }};
+    console.log(cards);
     M.AutoInit();
 
     function getCookie(name) {
@@ -83,7 +83,6 @@ $( document ).ready(function() {
             url: '/save_rating/'+card_id+'/'+seq_id+'/'+rating
         })
         .done(function( data ) {
-                alert(data);
                 $('#thumb_up').hide();
                 $('#thumb_down').hide();
                 $('#nextcard').show();
@@ -100,11 +99,28 @@ $( document ).ready(function() {
         });
         $.ajax({
             type: 'POST',
-            url: '/save_quiz/'+question_id+'/'+choice_id
+            url: '/save_quiz/'+choice_id+'/'+sequence
         })
         .done(function( data ) {
-                alert(data);
-                nextCard();
+                if(num<cards[counter].quizzes.length-1){parseQuiz(cards[counter].quizzes[num]); }
+                else{nextCard();}
+            });
+    }
+
+    function returnQuizScore(){
+        $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+            }
+        }
+        });
+        $.ajax({
+            type: 'POST',
+            url: '/quiz_score/'+sequence
+        })
+        .done(function( data ) {
+                M.toast({html: data, displayLength:8200, classes: 'rounded'});
             });
     }
 
@@ -119,24 +135,15 @@ $( document ).ready(function() {
         $('#cardtitle').fadeOut(200, function() {$(this).empty().text(cards[counter].title).show();});
         $('#description').fadeOut(200, function() {$(this).empty().text(cards[counter].description).show();});
         $('#contenta').fadeOut(200, function() {$(this).empty().append($.parseHTML(cards[counter].content)).show();});
-        $('#cardimage').fadeOut(200, function() {$(this).empty().append('<img id="img" src="/static/'+cards[counter].image+'">').show();});
+        $('#cardimage').fadeOut(200, function() {$(this).empty().append('<img id="img" src="'+cards[counter].image+'">').show();});
         $('#thumb_up').show();
         $('#thumb_down').show();
-        if (cards[counter].video){$('#nextcard').show(); $('#video-tab').show(); };
+        if (cards[counter].video){$('#nextcard').show(); $('#video-tab').show();};
     }
 
     function nextCard() {
-        alert(counter);
-        if (counter<cards.length && cards[counter].quizzes) { parseQuiz(cards[counter].quizzes); counter +=1;alert(counter);}
 
-        else if (counter<cards.length-1)
-        {
-            counter += 1;
-            showContent();
-        }
-        else if (counter==cards.length-1){
-            showContent();
-        }
+        if (counter<cards.length-1) { showContent(); counter +=1; }
         else {
             $('#sendquiz').hide();
             $('#video').hide();
@@ -146,14 +153,14 @@ $( document ).ready(function() {
             $('#description').hide();
             $('#cardimage').hide();
             $('#cardtitle').empty();
-            $('#contenta').empty().append('<h5>You have finished all the cards for this topic. You can explore other topics <a href="/">here</a></h5>');
+            $('#contenta').empty().append('<h5>You have finished all the cards for this topic. You can explore other topics <a href="'+'{% url "home" %}'+'">here</a></h5>');
+            returnQuizScore();
 
         }
 
     }
 
-    function parseQuiz(quizzes){
-        $.each(quizzes, function (index, value) {
+    function parseQuiz(quiz){
             $('#nextcard').hide();
             $('#card-tabs').hide();
             $('#cardtitle').empty().hide();
@@ -161,21 +168,21 @@ $( document ).ready(function() {
             $('#cardimage').empty().hide();
             $('#video').hide();
             $('#video-tab').hide();
-            $('#contenta').empty().append('<h5>'+value.question[1]+'</h5><br>');
-            $.each(value.choices, function (cindex, cvalue) {
+            if (quiz.question[2]) { $('#cardimage').empty().append('<img id="img" src="'+quiz.question[2]+'">').show();}
+            $('#contenta').empty().append('<h5>'+quiz.question[1]+'</h5><br>');
+            $.each(quiz.choices, function (cindex, cvalue) {
                 $('#contenta').append('<fieldset id="quizfield">' +
-                    '        <input type="radio" name="choice" data-quest="'+value.question[0]+'" id="'+cvalue[0]+'"' +
+                    '        <input type="radio" name="choice" data-quest="'+quiz.question[0]+'" data-correct="'+cvalue[2]+'" id="'+cvalue[0]+'"' +
                     '               value="'+cvalue[1]+'"/>' +
                     '        <label for="'+cvalue[0]+'">'+cvalue[1]+'</label>' +
                     '    </fieldset>');
             });
             $('#sendquiz').show();
-
-        })
     }
 
     $(function () {
             counter = 0;
+            num = 0;
             $('#sendquiz').hide();
             $('#nextcard').hide();
             $('#video').hide();
@@ -183,21 +190,31 @@ $( document ).ready(function() {
             $('#cardtitle').text(cards[counter].title);
             $('#description').text(cards[counter].description);
             $('#contenta').append($.parseHTML(cards[counter].content));
-            $('#cardimage').append('<img id="img" src="/static/'+cards[counter].image+'">');
+            $('#cardimage').append('<img id="img" src="'+cards[counter].image+'">');
             $('#thumb_up').click(function () { saveCardRating(cards[counter].id, sequence, '1') }).show();
             $('#thumb_down').click(function () { saveCardRating(cards[counter].id, sequence, '0')}).show();
             if (cards[counter].video){$('#nextcard').show(); $('#video-tab').show(); };
-
     });
 
     $('#nextcard').click(function () {
-            nextCard();
+            if(cards[counter].quizzes.length>0){for (i = 0; i < cards[counter].quizzes.length; i++){parseQuiz(cards[counter].quizzes[i]);}}
+             else{nextCard();}
         });
 
     $("#sendquiz").click(function() {
         var questionValue = $("input[name='choice']:checked").data("quest");
+        var questionResponse = $("input[name='choice']:checked").data("correct");
         var choiceValue = $("input[name='choice']:checked").attr("id");
-        saveQuizResponse(questionValue, choiceValue);
+        num += 1;
+
+            if (questionResponse != '1') {
+                M.toast({html: 'Your response is incorrect.', displayLength: 2200, classes: 'rounded'});
+            }
+            else {
+                M.toast({html: 'Your response is correct!', displayLength: 2200, classes: 'rounded'});
+            }
+            ;
+            saveQuizResponse(questionValue, choiceValue);
     });
 });
 </script>

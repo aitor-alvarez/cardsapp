@@ -4,7 +4,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from assessment.models import Quiz
+from assessment.models import Quiz, QuestionRating
 from django.utils import timezone
 
 type_choices = (
@@ -21,7 +21,8 @@ learning_choices = (
 
 lang_choices = (
     ('C', 'Chinese'),
-    ('R', 'Russian')
+    ('R', 'Russian'),
+    ('K', 'Korean')
 )
 
 
@@ -53,7 +54,7 @@ class Card(models.Model):
     reference_id = models.CharField(max_length=150, blank=True)
     description = models.CharField(max_length=250, blank=False)
     title = models.CharField(max_length=150, blank=False)
-    topic = models.ForeignKey('Topic', blank=True, on_delete=models.CASCADE)
+    topic = models.ForeignKey('Topic', blank=True, null=True, on_delete=models.CASCADE)
     card_type = models.CharField(max_length=1, choices=type_choices, blank=True)
     subtopic = models.ForeignKey('Subtopic', blank=True, null=True, on_delete=models.CASCADE)
     notes = models.TextField(blank=True)
@@ -61,10 +62,10 @@ class Card(models.Model):
     content = models.TextField(blank=False)
     image = models.ImageField(upload_to='uploads', blank=True)
     video = models.URLField(blank=True)
-    duration = models.FloatField(blank=True)
+    duration = models.FloatField(blank=True, null=True)
     learning_phase = models.CharField(max_length=1, choices=learning_choices, blank=True)
     language = models.CharField(max_length=1, choices=lang_choices, blank=False)
-    assessment = models.ForeignKey(Quiz, blank=True, null=False, on_delete=models.CASCADE)
+    quizzes = models.ManyToManyField(Quiz, blank=True)
 
     def __str__(self):
         return self.title
@@ -88,21 +89,18 @@ class Linkage(models.Model):
         return self.name
 
 
-class TopicManager(models.Manager):
-    def get_by_natural_key(self, name, chinese_name, russian_name ):
-        return self.get(name=name, chinese_name=chinese_name, russian_name=russian_name)
-
-
 class Topic(models.Model):
-    objects = TopicManager()
     name = models.CharField(max_length=150, blank=False)
     chinese_name = models.CharField(max_length=150, blank=True)
     description = models.TextField(blank=True)
     russian_name = models.CharField(max_length=150, blank=True)
-    image = models.ImageField(upload_to='uploads', blank=True)
+    korean_name = models.CharField (max_length=150, blank=True)
+    image_chinese = models.ImageField (upload_to='uploads', blank=True, null=True)
+    image_russian = models.ImageField (upload_to='uploads', blank=True, null=True)
+    image_korean = models.ImageField (upload_to='uploads', blank=True, null=True)
 
     class Meta:
-        unique_together = (('name', 'chinese_name', 'russian_name'),)
+        unique_together = (('name', 'chinese_name', 'russian_name', 'korean_name'),)
 
     def __str__(self):
         return self.name
@@ -120,3 +118,4 @@ class CardSequence(models.Model):
     card_sequence = models.CharField(max_length=250)
     rating = models.ManyToManyField('CardRating', blank=True)
     created = models.DateTimeField(default=timezone.now)
+    quiz_responses = models.ManyToManyField(QuestionRating, blank=True)

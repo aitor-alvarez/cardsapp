@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+{% load static %}
+{% block content %}
+
+<div class="container">
+    <h4 class="text-accent-4">Your History</h4>
+    <br>
+    {% for seq in sequences %}
+        {% if seq.rating.all|length > 0 %}
+    <div class="col s12 m8 offset-m2 l6 offset-l3">
+        <div class="card-panel grey lighten-5 z-depth-1">
+          <div class="row valign-wrapper">
+            <p>Date: {{ seq.created }} </p>
+            <p><strong>Cards:</strong></p>
+            <div class="col s10">
+              {% for s in seq.rating.all %}
+                  <p><a href="/card/{{ s.card.pk }}">{{ s.card.title }}</a></p>
+              {% endfor %}
+            </div>
+          <p><strong>Quizzes:</strong></p>
+          <div class="col s2">
+              {{ seq.score }} % Correct
+          </div>
+          </div>
+        </div>
+      </div>
+        {% endif %}
+    {% endfor %}
+</div>
+
+{% endblock %}
