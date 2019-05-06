@@ -92,15 +92,15 @@ class Linkage(models.Model):
 class Topic(models.Model):
     name = models.CharField(max_length=150, blank=False)
     chinese_name = models.CharField(max_length=150, blank=True)
-    description = models.TextField(blank=True)
-    russian_name = models.CharField(max_length=150, blank=True)
-    korean_name = models.CharField (max_length=150, blank=True)
+    description = models.TextField(blank=True, null=True)
+    russian_name = models.CharField(max_length=150, blank=True, null=True)
+    korean_name = models.CharField (max_length=150, blank=True, null=True)
     image_chinese = models.ImageField (upload_to='uploads', blank=True, null=True)
     image_russian = models.ImageField (upload_to='uploads', blank=True, null=True)
     image_korean = models.ImageField (upload_to='uploads', blank=True, null=True)
-
+    language = models.CharField (max_length=1, choices=lang_choices, blank=True, null=True)
     class Meta:
-        unique_together = (('name', 'chinese_name', 'russian_name', 'korean_name'),)
+        unique_together = ['name', 'chinese_name', 'russian_name']
 
     def __str__(self):
         return self.name

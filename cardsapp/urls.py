@@ -26,7 +26,6 @@ from django.contrib.auth.decorators import login_required
 urlpatterns = [
     path('', include(('social_django.urls', 'social_django'), namespace='social')),
     path('', include(('django.contrib.auth.urls','django.contrib.auth'), namespace='auth')),
-
     path('', login_required(TemplateView.as_view(template_name="cards/home.html")), name="home"),
     path('grappelli/', include('grappelli.urls')),
     path('admin/', admin.site.urls),
